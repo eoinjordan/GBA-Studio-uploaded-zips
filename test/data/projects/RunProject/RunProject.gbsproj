@@ -1,0 +1,133 @@
+{
+    "name": "RunProject",
+    "author": "ci",
+    "_version": "2.0.0",
+    "_release": "2",
+    "scenes": [
+        {
+            "_resourceType": "scene",
+            "_index": 0,
+            "id": "scene1",
+            "type": "TOPDOWN",
+            "name": "Scene1",
+            "symbol": "scene1",
+            "x": 0,
+            "y": 0,
+            "width": 20,
+            "height": 18,
+            "backgroundId": "1e5f9d6a-bdbc-43e6-8c34-22f5bb5dea05",
+            "tilesetId": "",
+            "colorModeOverride": null,
+            "paletteIds": ["default-bg-1"],
+            "spritePaletteIds": ["default-sprite"],
+            "autoFadeSpeed": 1,
+            "autoFadeEventCollapse": false,
+            "parallax": [],
+            "playerSpriteSheetId": "581d34d0-9591-4e6e-a609-1d94f203b0cd",
+            "script": [],
+            "playerHit1Script": [],
+            "playerHit2Script": [],
+            "playerHit3Script": [],
+            "collisions": "",
+            "scrollBounds": null,
+            "actors": [],
+            "triggers": []
+        }
+    ],
+    "backgrounds": [
+        {
+            "id": "1e5f9d6a-bdbc-43e6-8c34-22f5bb5dea05",
+            "name": "placeholder",
+            "width": 20,
+            "height": 18,
+            "imageWidth": 160,
+            "imageHeight": 144,
+            "filename": "placeholder.png",
+            "_v": 1600506915514
+        }
+    ],
+    "spriteSheets": [
+        {
+            "id": "11b5452b-187c-43a3-afb1-a1f4f74ffda2",
+            "name": "actor",
+            "numFrames": 3,
+            "type": "actor",
+            "filename": "actor.png",
+            "_v": 1600506915514
+        },
+        {
+            "id": "581d34d0-9591-4e6e-a609-1d94f203b0cd",
+            "name": "actor_animated",
+            "numFrames": 6,
+            "type": "actor_animated",
+            "filename": "actor_animated.png",
+            "_v": 1600506915514
+        },
+        {
+            "id": "daf95270-e30d-423b-9ee7-990ae29f57f6",
+            "name": "static",
+            "numFrames": 1,
+            "type": "static",
+            "filename": "static.png",
+            "_v": 1600506915514
+        }
+    ],
+    "palettes": [
+        {
+            "id": "default-bg-1",
+            "name": "Default BG 1",
+            "colors": [
+                "F8E8C8",
+                "D89048",
+                "A82820",
+                "301850"
+            ],
+            "defaultName": "Default BG 1",
+            "defaultColors": [
+                "F8E8C8",
+                "D89048",
+                "A82820",
+                "301850"
+            ]
+        },
+        {
+            "id": "default-sprite",
+            "name": "Default Sprites",
+            "colors": [
+                "F8F0E0",
+                "D88078",
+                "B05010",
+                "000000"
+            ],
+            "defaultName": "Default Sprites",
+            "defaultColors": [
+                "F8F0E0",
+                "D88078",
+                "B05010",
+                "000000"
+            ]
+        }
+    ],
+    "customEvents": [],
+    "music": [],
+    "variables": [],
+    "settings": {
+        "startSceneId": "scene1",
+        "startX": 9,
+        "startY": 9,
+        "showCollisions": true,
+        "showConnections": true,
+        "worldScrollX": 0,
+        "worldScrollY": 0,
+        "zoom": 100,
+        "colorMode": "mono",
+        "defaultBackgroundPaletteIds": [
+            "default-bg-1"
+        ],
+        "defaultSpritePaletteId": "default-sprite",
+        "defaultUIPaletteId": "default-sprite",
+        "defaultFadeStyle": "white",
+        "startDirection": "down",
+        "playerSpriteSheetId": "581d34d0-9591-4e6e-a609-1d94f203b0cd"
+    }
+}

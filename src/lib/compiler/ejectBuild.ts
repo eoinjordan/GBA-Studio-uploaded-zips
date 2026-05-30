@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import rimraf from "rimraf";
 import { promisify } from "util";
 import Path from "path";
-import { defaultEngineMetaPath, defaultEngineRoot } from "consts";
+import { defaultEngineMetaPath, defaultEngineRoot, enginesRoot } from "consts";
 import copy from "lib/helpers/fsCopy";
 import ejectEngineChangelog, {
   isKnownEngineVersion,
@@ -75,6 +75,20 @@ const ejectBuild = async ({
       );
     },
   });
+
+  // Some GBA engine variants keep different include sets. If vm.h is missing,
+  // merge the GBVM includes so generated builds can still resolve VM headers.
+  try {
+    const vmHeaderPath = Path.join(outputRoot, "include", "vm.h");
+    if (!(await fs.pathExists(vmHeaderPath))) {
+      const gbvmInclude = Path.join(enginesRoot, "gbvm", "include");
+      if (await fs.pathExists(gbvmInclude)) {
+        await copy(gbvmInclude, Path.join(outputRoot, "include"));
+      }
+    }
+  } catch (e) {
+    // non-fatal; proceed and let build report missing files if still absent
+  }
 
   const expectedEngineVersion = await readEngineVersion(defaultEngineMetaPath);
 

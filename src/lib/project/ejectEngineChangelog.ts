@@ -891,7 +891,11 @@ const changes: EngineChange[] = [
 ];
 
 export const isKnownEngineVersion = (currentVersion: string): boolean => {
-  return changes.some((change) => change.version === currentVersion);
+  if (changes.some((change) => change.version === currentVersion)) return true;
+  // Accept engine metadata variants that share the same base version (eg "4.2.0-gba"
+  // should be considered known if any change exists for the base "4.2.0").
+  const base = currentVersion.split("-")[0];
+  return changes.some((change) => change.version.split("-")[0] === base);
 };
 
 const ejectEngineChangelog = (currentVersion: string) => {

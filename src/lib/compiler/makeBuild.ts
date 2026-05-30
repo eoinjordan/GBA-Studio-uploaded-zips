@@ -8,7 +8,11 @@ import {
 } from "./buildMakeScript";
 import { cacheObjData, fetchCachedObjData } from "./objCache";
 import ensureBuildTools from "./ensureBuildTools";
-import { getDevKitProPaths, validateDevKitPro } from "lib/helpers/devkitpro";
+import {
+  getDevKitProPaths,
+  isUsableGcc,
+  validateDevKitPro,
+} from "lib/helpers/devkitpro";
 import spawn, { ChildProcess } from "lib/helpers/cli/spawn";
 import l10n from "shared/lib/lang/l10n";
 import { ProjectResources } from "shared/lib/resources/types";
@@ -60,15 +64,50 @@ const makeBuild = async ({
 
   // Check if we're building for GBA
   const isGBA = true; // For now, always use GBA
-  
+
   if (isGBA) {
-    // GBA build setup - use system devkitPro
-    validateDevKitPro();
+    // GBA build setup - prefer system devkitPro, but fall back to bundled
+    // buildTools/devkitARM if devkitPro is not installed on the host.
     const devkitPaths = getDevKitProPaths();
-    
-    env.PATH = envWith([Path.join(devkitPaths.devkitArm, "bin")]);
-    env.DEVKITPRO = devkitPaths.devkitPro;
-    env.DEVKITARM = devkitPaths.devkitArm;
+    if (devkitPaths.isValid) {
+      env.PATH = envWith([Path.join(devkitPaths.devkitArm, "bin")]);
+      env.DEVKITPRO = devkitPaths.devkitPro;
+      env.DEVKITARM = devkitPaths.devkitArm;
+      // Ensure process.env also contains these for helpers that read it
+      process.env.DEVKITPRO = devkitPaths.devkitPro;
+      process.env.DEVKITARM = devkitPaths.devkitArm;
+    } else {
+      // Fallback to bundled devkit in tmp/_gbstools
+      const bundledDevkitArm = Path.join(buildToolsPath, "devkitARM");
+      const bundledDevkitArmAlt = Path.join(buildToolsPath, "devkitarm");
+      const devkitArmPath = (await fs.pathExists(bundledDevkitArm))
+        ? bundledDevkitArm
+        : (await fs.pathExists(bundledDevkitArmAlt))
+          ? bundledDevkitArmAlt
+          : "";
+      const bundledGcc = devkitArmPath
+        ? Path.join(
+            devkitArmPath,
+            "bin",
+            process.platform === "win32"
+              ? "arm-none-eabi-gcc.exe"
+              : "arm-none-eabi-gcc",
+          )
+        : "";
+      if (devkitArmPath && isUsableGcc(bundledGcc)) {
+        env.PATH = envWith([Path.join(devkitArmPath, "bin")]);
+        env.DEVKITPRO = buildToolsPath;
+        env.DEVKITARM = devkitArmPath;
+        // Also set process.env so getBuildCommands can detect the fallback toolchain
+        process.env.DEVKITPRO = buildToolsPath;
+        process.env.DEVKITARM = devkitArmPath;
+        // Do not throw here; proceed using bundled toolchain
+      } else {
+        // No devkit available
+        validateDevKitPro();
+      }
+    }
+
     env.GBA_TOOLS_VERSION = buildToolsVersion;
     env.TARGET_PLATFORM = "gba";
   } else {
@@ -185,9 +224,10 @@ const makeBuild = async ({
     const devkitPaths = getDevKitProPaths();
     linkCommand = devkitPaths.gccPath;
   } else {
-    linkCommand = process.platform === "win32"
-      ? `..\\_gbstools\\gbdk\\bin\\lcc.exe`
-      : `../_gbstools/gbdk/bin/lcc`;
+    linkCommand =
+      process.platform === "win32"
+        ? `..\\_gbstools\\gbdk\\bin\\lcc.exe`
+        : `../_gbstools/gbdk/bin/lcc`;
   }
   const linkArgs = buildLinkFlags(
     linkFilePath,

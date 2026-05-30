@@ -14,6 +14,13 @@ if (isDist) {
   rootDir = normalize(`${__dirname}/../`);
 }
 
+// Fallback: if rootDir couldn't be determined (empty string), try a reasonable
+// fallback relative to __dirname so packaged CLI can still locate `appData`.
+if (!rootDir || rootDir.length < 2) {
+  // Default to two levels up from the current directory (works for out/cli bundle)
+  rootDir = normalize(`${__dirname}/../../`);
+}
+
 // Paths
 export const buildUUID = "_gbsbuild";
 export const enginesRoot = normalize(`${rootDir}/appData/engine`);

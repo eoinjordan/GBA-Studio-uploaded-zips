@@ -1,0 +1,98 @@
+name: GBA Studio CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-rom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable || npm ci
+
+      - name: Fetch engine and tool dependencies
+        run: npm run fetch-deps
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build CLI
+        run: npm run make:cli
+
+      - name: Install devkitPro GBA toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ca-certificates curl
+          curl -L https://github.com/devkitPro/pacman/releases/latest/download/devkitpro-pacman.deb -o /tmp/devkitpro-pacman.deb
+          sudo apt-get install -y /tmp/devkitpro-pacman.deb
+          sudo dkp-pacman -Sy --needed --noconfirm gba-dev
+          echo "DEVKITPRO=/opt/devkitpro" >> "$GITHUB_ENV"
+          echo "DEVKITARM=/opt/devkitpro/devkitARM" >> "$GITHUB_ENV"
+          test -x /opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc
+
+      - name: Build sample GBA ROM
+        env:
+          DEVKITPRO: ${{ env.DEVKITPRO }}
+          DEVKITARM: ${{ env.DEVKITARM }}
+        run: npm run build:gba -- test/data/projects/RunProject/RunProject.gbsproj out/RunProject.gba
+
+      - name: Install mGBA for smoke test
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends mgba-sdl
+
+      - name: Run emulator smoke test
+        env:
+          GBA_STUDIO_EMULATOR: mgba
+          GBA_STUDIO_EMULATOR_HEADLESS: "1"
+          GBA_STUDIO_EMULATOR_TIMEOUT_MS: "10000"
+        run: npm run test:emu -- out/RunProject.gba
+
+      - name: Export sample GBDK project
+        run: node out/cli/gb-studio-cli.js export test/data/projects/RunProject/RunProject.gbsproj out/ci/RunProject
+
+      - name: Upload ROM and export artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gba-studio-rom-smoke
+          path: |
+            out/RunProject.gba
+            out/ci/RunProject/**
+
+  attach-release-artifacts:
+    needs: test-and-rom
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Download ROM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: gba-studio-rom-smoke
+          path: release-artifacts
+
+      - name: Attach artifacts to GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-artifacts/**

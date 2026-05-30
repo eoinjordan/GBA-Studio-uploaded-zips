@@ -18,6 +18,10 @@ const rmdir = promisify(rimraf);
 declare const VERSION: string;
 
 type Command = "export" | "make:rom" | "make:pocket" | "make:web";
+type CommandOptions = {
+  onlyData?: boolean;
+  verbose?: boolean;
+};
 
 const buildTypeForCommand = (command: Command): BuildType => {
   if (command === "make:web") {
@@ -33,6 +37,7 @@ const main = async (
   command: Command,
   projectFile: string,
   destination: string,
+  options: CommandOptions = {},
 ) => {
   initElectronL10N();
 
@@ -51,13 +56,13 @@ const main = async (
   const outputRoot = tmpBuildDir;
 
   const progress = (message: string) => {
-    if (program.verbose) {
+    if (options.verbose) {
       console.log(message);
     }
   };
 
   const warnings = (message: string) => {
-    if (program.verbose) {
+    if (options.verbose) {
       console.warn(message);
     }
   };
@@ -88,7 +93,7 @@ const main = async (
   await result;
 
   if (command === "export") {
-    if (program.onlyData) {
+    if (options.onlyData) {
       // Export src/data and include/data to destination
       const dataSrcTmpPath = Path.join(tmpBuildDir, "src", "data");
       const dataSrcOutPath = Path.join(destination, "src", "data");
@@ -151,32 +156,37 @@ program.version(VERSION);
 program
   .command("export <projectFile> <destination>")
   .description("Export a project file to a GBDK project with engine and data")
-  .action((source, destination) => {
-    main("export", source, destination);
+  .option("-d, --onlyData", "Only replace data folder in destination")
+  .option("-v, --verbose", "Verbose output")
+  .action((source, destination, options: CommandOptions) => {
+    return main("export", source, destination, options);
   });
 
 program
-  .command("make:rom <projectFile> <destination.gb>")
+  .command("make:rom <projectFile> <destination.gba>")
   .description("Build a ROM from project file")
-  .action((source, destination) => {
-    main("make:rom", source, destination);
+  .option("-v, --verbose", "Verbose output")
+  .action((source, destination, options: CommandOptions) => {
+    return main("make:rom", source, destination, options);
   });
 
 program
   .command("make:pocket <projectFile> <destination.pocket>")
   .description("Build a Pocket from project file")
-  .action((source, destination) => {
-    main("make:pocket", source, destination);
+  .option("-v, --verbose", "Verbose output")
+  .action((source, destination, options: CommandOptions) => {
+    return main("make:pocket", source, destination, options);
   });
 
 program
   .command("make:web <projectFile> <destination>")
   .description("Build for web from project file")
-  .action((source, destination) => {
-    main("make:web", source, destination);
+  .option("-v, --verbose", "Verbose output")
+  .action((source, destination, options: CommandOptions) => {
+    return main("make:web", source, destination, options);
   });
 
-program.option("-d, --onlyData", "Only replace data folder in destination");
-program.option("-v, --verbose", "Verbose output");
-
-program.parse(process.argv);
+program.parseAsync(process.argv).catch((error) => {
+  console.error(error?.stack || error);
+  process.exit(1);
+});

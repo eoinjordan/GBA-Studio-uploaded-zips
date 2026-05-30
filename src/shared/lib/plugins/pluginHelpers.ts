@@ -78,7 +78,9 @@ export const buildPluginItems = (
   for (const repo of repos) {
     for (const plugin of repo.plugins) {
       const installedVersion = installedPlugins.find((p) => {
-        return p.path === join(plugin.id, "plugin.json");
+        // Normalize installed plugin paths to use forward slashes for comparison
+        const normalizedPath = p.path.replace(/\\/g, "/");
+        return normalizedPath === `${plugin.id}/plugin.json`;
       })?.version;
       items.push({
         id: `${repo.id}-${plugin.id}`,

@@ -2,11 +2,10 @@
 
 - GBA Studio Copyright (c) 2025 Blue Heron, also released under the MIT license.
 - GB Studio Copyright (c) 2024 Chris Maltby, released under the [MIT license](https://opensource.org/licenses/MIT).
-g/bxerKnc)
 
-GBA Studio is an experimental fork of GBA Studio that's tailored for GBA game development. Like the original, GBA Studio aims to provide a quick and easy way to use retro adventure game creator for Game Boy Advance, available for Mac, Linux and Windows.
+GBA Studio is an experimental fork of GB Studio tailored for Game Boy Advance game development. Like the original, it provides a visual retro game editor for Mac, Linux, and Windows.
 
-## ⚠️ Maintainers Wanted ⚠️
+## Maintainers Wanted
 
 This project is a prototype. I'm not a JS/TS expert, nor a GBA ROM expert. If you can take over where I've left off, please let me know.
 
@@ -24,58 +23,65 @@ It's a fully functional GB Studio look-alike that:
 - Exports working .gba ROM files
 - Runs the compiled games on GBA emulators or real hardware
 
-For more information see the original [GBA Studio](https://www.gbstudio.dev) site.
+For more information on the upstream project see the original [GB Studio](https://www.gbstudio.dev) site.
 
 ![GBA Studio](gbstudio.gif)
 
 GBA Studio consists of an [Electron](https://electronjs.org/) game builder application and a C based game engine using [GBDK](http://gbdk.sourceforge.net/).
 
-## Installation
+## Installation / From source
 
-Download a release for your operating system from the [GBA Studio Downloads](https://www.gbstudio.dev/download) page.
+Download a release for your operating system from this repository's GitHub Releases page, or run from source:
 
-Or to run from source, clone this repo then:
+Prerequisites
 
-- Install [NodeJS](https://nodejs.org/) (required version is given in [.nvmrc](.nvmrc))
+- Node.js (LTS recommended)
+- Git
+- devkitPro/devkitARM if you plan to build `.gba` files (see `docs/DEVKIT_SETUP.md`)
+
+Quick start (use the bootstrap script to enable Corepack/Yarn or fall back to `npm`):
 
 ```bash
-> cd gb-studio
-> corepack enable
-> yarn
-> npm run fetch-deps
-> npm start
+cd gba-studio
+# Linux / macOS
+bash tools/bootstrap.sh
+# Windows (PowerShell)
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\bootstrap.ps1
 ```
 
-After checking out a new version you may also need to fetch dependencies again to ensure you have the latest version of GBVM + GBDK etc.
+If you prefer `npm` instead of Yarn/Corepack:
 
 ```bash
-> cd gb-studio
-> npm run fetch-deps
+npm ci
+npm run fetch-deps
+npm start
 ```
 
-GBA Studio currently uses Node 21.7.1. If you have [NVM](https://github.com/nvm-sh/nvm) installed you can use the included `.nvmrc` to switch to the supported Node version.
+After checking out a new version run:
 
 ```bash
-> cd gb-studio
-> nvm use
+npm run fetch-deps
+```
+
+If you use `nvm` you can switch to the repository Node version with `.nvmrc`:
+
+```bash
+nvm use
 ```
 
 ## GBA Studio CLI
 
-Install GBA Studio from source as above then
+Install GBA Studio from source as above then:
 
 ```bash
-> npm run make:cli
-> yarn link
-# From any folder you can now run gb-studio-cli
-> $(yarn bin gb-studio-cli) -V
-4.1.2
-> $(yarn bin gb-studio-cli) --help
+npm run make:cli
 ```
+
+The CLI entrypoint is `out/cli/gb-studio-cli.js`. Common commands are documented in `docs/CLI_USAGE.md`.
 
 ### Update the CLI
 
-Pull the latest code and run make:cli again, yarn link is only needed for the first run.
+Pull the latest code and run `make:cli` again.
 
 ```bash
 > npm run make:cli
@@ -86,44 +92,93 @@ Pull the latest code and run make:cli again, yarn link is only needed for the fi
 - **Export Project**
 
   ```bash
-  > $(yarn bin gb-studio-cli) export path/to/project.gbsproj out/
+  > node out/cli/gb-studio-cli.js export path/to/project.gbsproj out/
   ```
 
   Export GBDK project from gbsproj to out directory
 
 - **Export Data**
   ```bash
-  > $(yarn bin gb-studio-cli) export -d path/to/project.gbsproj out/
+  > node out/cli/gb-studio-cli.js export path/to/project.gbsproj out/ -d
   ```
   Export only src/data and include/data from gbsproj to out directory
 - **Make ROM**
 
   ```bash
-  > $(yarn bin gb-studio-cli) make:rom path/to/project.gbsproj out/game.gb
+  > node out/cli/gb-studio-cli.js make:rom path/to/project.gbsproj out/game.gba
   ```
 
-  Make a ROM file from gbsproj
+  Make a GBA ROM file from gbsproj
 
 - **Make Pocket**
 
   ```bash
-  > $(yarn bin gb-studio-cli) make:pocket path/to/project.gbsproj out/game.pocket
+  > node out/cli/gb-studio-cli.js make:pocket path/to/project.gbsproj out/game.pocket
   ```
 
   Make a Pocket file from gbsproj
 
 - **Make Web**
   ```bash
-  > $(yarn bin gb-studio-cli) make:web path/to/project.gbsproj out/
+  > node out/cli/gb-studio-cli.js make:web path/to/project.gbsproj out/
   ```
   Make a Web build from gbsproj
 
 ## Documentation
 
+See the `docs/` folder for repository-specific guides:
+
+- `docs/GETTING_STARTED.md` - quickstart and run instructions
+- `docs/DEVKIT_SETUP.md` - devkitPro installation and verification
+- `docs/CLI_USAGE.md` - CLI commands and examples
+- `docs/EMULATOR.md` - emulator smoke tests and CI usage
+- `docs/CI.md` - CI notes and recommendations
+- `docs/CONTRIBUTING.md` - contributing and development workflow
+
+## Prebuilt Packages
+
+Prebuilt installers are produced by the project's CI when a Git tag is pushed. Download installers from the GitHub Release created for the tag or from the workflow artifacts.
+
+### Local Package Builds
+
+You can build platform installers locally using Electron Forge. The project includes convenience npm scripts for each platform:
+
+Windows:
+
+```powershell
+Set-Location 'c:\Users\Eoin\git\GBAStudio\gba-studio'
+npm ci
+npm run make:win
+# Output installers will be in the out/make/ folder
+Get-ChildItem -Path .\out\make -Recurse
+```
+
+Linux:
+
+```bash
+cd gba-studio
+npm ci
+npm run make:linux
+ls -la out/make
+```
+
+macOS:
+
+```bash
+cd gba-studio
+npm ci
+npm run make:mac
+ls -la out/make
+```
+
+Notes
+
+- Packaging may require additional platform tools (codesign on macOS, signing/certificate tooling on Windows). CI will produce unsigned packages by default unless signing secrets are provided.
+- If a local package build fails, check the `out/` and `out/make/` directories for logs and artifacts and consult `docs/CI.md` for troubleshooting.
+
 [GB Studio Documentation](https://www.gbstudio.dev/docs)
 
 ## Note For Translators
-
 
 If you're looking to update an existing translation with content that is missing, there is a handy script that lists keys found in the English localisation that are not found and copies them to your localisation
 
